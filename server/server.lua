@@ -39,6 +39,65 @@ RSGCore.Functions.CreateCallback('rsg-lawman:server:getlaw', function(source, cb
     cb(lawcount)
 end)
 
+-- Add 'unjail' command
+RSGCore.Commands.Add("unjail", "Release a player from jail", {{name = "id", help = "Player ID"}}, true, function(source, args)
+    local src = source
+    local Player = RSGCore.Functions.GetPlayer(src)
+
+    -- Check if the player issuing the command is a law enforcement officer
+    if Player.PlayerData.job.type == "leo" then
+        local playerId = tonumber(args[1])
+        
+        if playerId then
+            local TargetPlayer = RSGCore.Functions.GetPlayer(playerId)
+            
+            if TargetPlayer then
+                -- Trigger the unjail event for the target player
+                TriggerClientEvent('rsg-prison:client:freedom', TargetPlayer.PlayerData.source)
+                
+                -- Notify the player issuing the command
+                TriggerClientEvent('ox_lib:notify', src, {
+                    title = "Unjail Success",
+                    description = "Player has been successfully released from jail.",
+                    type = 'success',
+                    duration = 5000
+                })
+                
+                -- Optionally notify the target player
+                TriggerClientEvent('ox_lib:notify', TargetPlayer.PlayerData.source, {
+                    title = "You Have Been Released",
+                    description = "You have been released from jail by a law enforcement officer.",
+                    type = 'success',
+                    duration = 5000
+                })
+            else
+                TriggerClientEvent('ox_lib:notify', src, {
+                    title = "Unjail Error",
+                    description = "Player ID not found.",
+                    type = 'error',
+                    duration = 5000
+                })
+            end
+        else
+            TriggerClientEvent('ox_lib:notify', src, {
+                title = "Unjail Error",
+                description = "Invalid player ID.",
+                type = 'error',
+                duration = 5000
+            })
+        end
+    else
+        -- Notify the player issuing the command if they're not a law enforcement officer
+        TriggerClientEvent('ox_lib:notify', src, {
+            title = "Unjail Error",
+            description = "You do not have permission to use this command.",
+            type = 'error',
+            duration = 5000
+        })
+    end
+end)
+
+
 --------------------------------------------------------------------------------------------------
 -- lawman alert
 --------------------------------------------------------------------------------------------------
